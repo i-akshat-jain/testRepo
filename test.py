@@ -1,5 +1,6 @@
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
+import mpld3
 
 # Your data
 columns = ['Cecum', 'Ascending', 'Transverse', 'Descending', 'Sigmoid', 'Rectosigmoid', 'Rectum']
@@ -31,4 +32,16 @@ ax.legend()
 plt.xlabel('Intestinal Regions')
 plt.ylabel('Values')
 plt.title('Bar Graph of the Data')
+
+# Convert the Matplotlib plot to HTML using mpld3
+html_code = mpld3.fig_to_html(fig)
+
+# Save or print the HTML code as needed
+print(html_code)
+
+# Optionally, you can save the HTML code to a file
+with open('plot.html', 'w') as html_file:
+    html_file.write(html_code)
+
+# Show the plot (note: this will block the execution)
 plt.show()

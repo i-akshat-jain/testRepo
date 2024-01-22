@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matplotlib Plot</title>
+    
+    <!-- Include the mpld3 library -->
+    <script src="https://mpld3.github.io/js/mpld3.v0.5.5.js"></script>
+</head>
+<body>
+
+    <!-- Replace YOUR_PLOT_HTML_CODE with the actual HTML code -->
+    <div id="plot-container">
+        YOUR_PLOT_HTML_CODE
+    </div>
+
+    <!-- Add script to enable mpld3 interactivity -->
+    <script>
+        // Wrap mpld3 code in a function to avoid conflicts with other scripts
+        (function() {
+            // Replace 'plot-container' with the ID of your plot container
+            var plotContainer = document.getElementById('plot-container');
+            
+            // Enable mpld3 interactivity
+            mpld3.draw_figure('plot-container', JSON.parse(atob('YOUR_JSON_STATE')));
+        })();
+    </script>
+
+</body>
+</html>
