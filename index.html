@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Research Presentation Website</title>
+        <!-- Include the mpld3 library -->
+        <script src="https://mpld3.github.io/js/mpld3.v0.5.5.js"></script>
+        <!-- <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css"> -->
+        <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+
+    </head>
+    <body>
+        <header>
+            <h1>Research Presentation Website</h1>
+        </header>
+        <py-script>print("hello")</py-script>
+        <py-script>
+        import matplotlib.pyplot as plt
+        import numpy as np
+
+        # Your Python code here
+        print("hello")
+
+        # Example plotting code
+        x = np.linspace(0, 2 * np.pi, 100)
+        y = np.sin(x)
+        plt.plot(x, y)
+        plt.xlabel('X-axis')
+        plt.ylabel('Y-axis')
+        plt.title('Sine Wave')
+        plt.show()
+        </py-script>
+    </body>
+</html>
