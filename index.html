@@ -1,35 +1,45 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+
+<html>
     <head>
+        <!-- Recommended meta tags -->
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Research Presentation Website</title>
-        <!-- Include the mpld3 library -->
-        <script src="https://mpld3.github.io/js/mpld3.v0.5.5.js"></script>
-        <!-- <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css"> -->
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+        <!-- PyScript CSS -->
+        <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css">
+        <!-- CSS for examples -->
+        <link rel="stylesheet" href="./assets/css/examples.css" />
+
+        <!-- This script tag bootstraps PyScript -->
         <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
 
+        <!-- for splashscreen -->
+        <style>
+            #loading { outline: none; border: none; background: transparent }
+        </style>
+        <script type="module">
+            const loading = document.getElementById('loading');
+            addEventListener('py:ready', () => loading.close());
+            loading.showModal();
+        </script>
+
+        <title>Matplotlib</title>
+        <link rel="icon" type="image/png" href="./assets/favicon.png" />
     </head>
+
     <body>
-        <header>
-            <h1>Research Presentation Website</h1>
-        </header>
-        <py-script>print("hello")</py-script>
-        <py-script>
-        import matplotlib.pyplot as plt
-        import numpy as np
+        <dialog id="loading">
+            <h1>Loading...</h1>
+        </dialog>
 
-        # Your Python code here
-        print("hello")
+        
 
-        # Example plotting code
-        x = np.linspace(0, 2 * np.pi, 100)
-        y = np.sin(x)
-        plt.plot(x, y)
-        plt.xlabel('X-axis')
-        plt.ylabel('Y-axis')
-        plt.title('Sine Wave')
-        plt.show()
-        </py-script>
+        <section class="pyscript">
+            <div id="mpl"></div>
+            <script type="py" src="./main.py" config="./pyscript.toml"></script>
+        </section>
+
     </body>
+
 </html>
