@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import mpld3
+
 
 # Your data
 columns = ['Cecum', 'Ascending', 'Transverse',
