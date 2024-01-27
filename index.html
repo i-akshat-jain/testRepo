@@ -1,45 +1,26 @@
-<!doctype html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Combined Graphs</title>
+</head>
+<body>
 
-<html>
-    <head>
-        <!-- Recommended meta tags -->
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+<h1>Combined Graphs</h1>
 
-        <!-- PyScript CSS -->
-        <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css">
-        <!-- CSS for examples -->
-        <link rel="stylesheet" href="./assets/css/examples.css" />
+<div style="display: flex; flex-wrap: nowrap; overflow-x: auto;">
 
-        <!-- This script tag bootstraps PyScript -->
-        <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+    <!-- Include iframe for each HTML file -->
+    <iframe src="plotly_asceding.html" width="600" height="400" style="margin: 10px;"></iframe>
+    <iframe src="plotly_cecum.html" width="600" height="400" style="margin: 10px;"></iframe>
+    <iframe src="plotly_descending.html" width="600" height="400" style="margin: 10px;"></iframe>
+    <iframe src="plotly_Rectosigmoid.html" width="600" height="400" style="margin: 10px;"></iframe>
+    <iframe src="plotly_rectum.html" width="600" height="400" style="margin: 10px;"></iframe>
+    <iframe src="plotly_sigmoid.html" width="600" height="400" style="margin: 10px;"></iframe>
+    <iframe src="plotly_transvrse.html" width="600" height="400" style="margin: 10px;"></iframe>
 
-        <!-- for splashscreen -->
-        <style>
-            #loading { outline: none; border: none; background: transparent }
-        </style>
-        <script type="module">
-            const loading = document.getElementById('loading');
-            addEventListener('py:ready', () => loading.close());
-            loading.showModal();
-        </script>
+</div>
 
-        <title>Matplotlib</title>
-        <link rel="icon" type="image/png" href="./assets/favicon.png" />
-    </head>
-
-    <body>
-        <dialog id="loading">
-            <h1>Loading...</h1>
-        </dialog>
-
-        
-
-        <section class="pyscript">
-            <div id="mpl"></div>
-            <script type="py" src="./main.py" config="./pyscript.toml"></script>
-        </section>
-
-    </body>
-
+</body>
 </html>
