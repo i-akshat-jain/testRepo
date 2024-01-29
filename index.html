@@ -1,62 +1,86 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Plots</title>
-    <!-- Include Plotly library -->
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <!-- Include d3 library -->
-    <script src="https://d3js.org/d3.v5.min.js"></script>
-</head>
-<body>
-    <div id="plot-container" style="display: flex;"></div>
-
-
-<script>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Interactive Plots</title>
+        <!-- Include Plotly library -->
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+        <!-- Include d3 library -->
+        <script src="https://d3js.org/d3.v5.min.js"></script>
+    </head>
+    <body>
+        <div id="plot-container" style="display: flex;"></div>
+        <script>
     // Function to load and process CSV data
-    async function processData() {
-        const folderPath = 'NormalvsTumor_HILIC_ALL/';
-        const response = await fetch(folderPath);
-        const fileNames = await fetchFileNames(folderPath);
-        const dataFrames = {};
-
-        // Load CSV data into dataFrames
-        for (const fileName of fileNames) {
-            if (fileName.endsWith('.csv')) {
-                const variableName = fileName.replace('CRC_HILIC_', '').replace('_Ttest.csv', '');
-                const filePath = `${folderPath}${fileName}`;
-
-                try {
-                    const response = await fetch(filePath);
-                    const data = await response.text();
-                    dataFrames[variableName] = await d3.csvParse(data); // Use await here
-                } catch (error) {
-                    console.error(`Error reading file '${fileName}': ${error.message}`);
-                }
-            }
-        }
-
-        // Process dataFrames and generate plots
-        processResults(dataFrames);
-    }
-
-    // Function to fetch file names from the server
     async function fetchFileNames(folderPath) {
     try {
         const response = await fetch(folderPath);
-        
         if (!response.ok) {
             throw new Error(`Failed to fetch. Status: ${response.status}`);
         }
 
-        const fileNames = await response.json();
+        let fileNames;
+
+        try {
+            // Try to parse the response as JSON
+            const clonedResponse = response.clone(); // Clone the response object
+            fileNames = await clonedResponse.json(); // Consume the cloned response as JSON
+            console.log("File Names:", fileNames); // // Print the file names
+        } catch (jsonError) {
+            // If parsing as JSON fails, assume it's HTML and extract file names differently
+            const textResponse = await response.text(); // Read the response as text
+
+            // Create a new response with the text content
+            const newResponse = new Response(textResponse, {
+                status: response.status,
+                statusText: response.statusText,
+                headers: response.headers,
+            });
+
+            // Read the body of the new response
+            fileNames = await newResponse.json();
+            console.log("File Names:", fileNames); // Print the file names
+            console.log(jsonError);
+        }
+
         return fileNames;
     } catch (error) {
         console.error(`Error fetching file names: ${error.message}`);
         throw error; // Re-throw the error to propagate it
     }
 }
+
+
+    async function processData() {
+            const folderPath = 'NormalvsTumor_HILIC_ALL/';
+            const fileNames = await fetchFileNames(folderPath);
+            const dataFrames = {};
+
+            // Load CSV data into dataFrames
+            for (const fileName of fileNames) {
+                if (fileName.endsWith('.csv')) {
+                    const variableName = fileName.replace('CRC_HILIC_', '').replace('_Ttest.csv', '');
+                    const filePath = `${folderPath}${fileName}`;
+
+                    try {
+                        const response = await fetch(filePath);
+                        const data = await response.text();
+                        dataFrames[variableName] = await d3.csvParse(data); // Use await here
+                    } catch (error) {
+                        console.error(`Error reading file '${fileName}': ${error.message}`);
+                    }
+                }
+            }
+
+            // Process dataFrames and generate plots
+            processResults(dataFrames);
+        }
+
+    // Function to fetch file names from the server
+    
+
+
     // Function to process results and generate plots
     function processResults(dataFrames) {
         const selectedMzValue = 694.31494;
@@ -85,6 +109,7 @@
                     console.log(`Q FDR: ${qFdr}`);
                     console.log(`Log FC Matched: ${logFcMatched}`);
                     console.log(`Q FDR Stars: ${qFdrStars}`);
+                    
                 } else {
                     console.log(`No data found for the selected 'mz' value in ${variableName}.`);
                 }
@@ -214,12 +239,12 @@
                     console.log("No unique row found for the selected 'mz' value in DataFrame '" + variableName + "'.");
                 }
             }
+            console.log("DataFrames:", dataFrames);
         }
     }
 
     // Load and process data on page load
     processData();
-</script>
-
-</body>
+        </script>
+    </body>
 </html>
