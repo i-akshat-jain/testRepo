@@ -16,7 +16,8 @@
 <script>
     // Function to load and process CSV data
     async function processData() {
-        const folderPath = 'tree/master/NormalvsTumor_HILIC_ALL';
+        const folderPath = 'testRepo/NormalvsTumor_HILIC_ALL/';
+        const response = await fetch(folderPath);
         const fileNames = await fetchFileNames(folderPath);
         const dataFrames = {};
 
