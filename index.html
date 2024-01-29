@@ -16,7 +16,7 @@
 <script>
     // Function to load and process CSV data
     async function processData() {
-        const folderPath = 'NormalvsTumor_HILIC_ALL/';
+        const folderPath = 'tree/master/NormalvsTumor_HILIC_ALL/';
         const fileNames = await fetchFileNames(folderPath);
         const dataFrames = {};
 
@@ -42,11 +42,20 @@
 
     // Function to fetch file names from the server
     async function fetchFileNames(folderPath) {
+    try {
         const response = await fetch(folderPath);
+        
+        if (!response.ok) {
+            throw new Error(`Failed to fetch. Status: ${response.status}`);
+        }
+
         const fileNames = await response.json();
         return fileNames;
+    } catch (error) {
+        console.error(`Error fetching file names: ${error.message}`);
+        throw error; // Re-throw the error to propagate it
     }
-
+}
     // Function to process results and generate plots
     function processResults(dataFrames) {
         const selectedMzValue = 694.31494;
