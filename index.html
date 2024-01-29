@@ -3,24 +3,213 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Combined Graphs</title>
+    <title>Interactive Plots</title>
+    <!-- Include Plotly library -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <!-- Include d3 library -->
+    <script src="https://d3js.org/d3.v5.min.js"></script>
 </head>
 <body>
+    <div id="plot-container" style="display: flex;"></div>
 
-<h1>Combined Graphs</h1>
 
-<div style="display: flex; flex-wrap: nowrap; overflow-x: auto;">
+<script>
+    // Function to load and process CSV data
+    async function processData() {
+        const folderPath = 'NormalvsTumor_HILIC_ALL/';
+        const fileNames = await fetchFileNames(folderPath);
+        const dataFrames = {};
 
-    <!-- Include iframe for each HTML file -->
-    <iframe src="plotly_asceding.html" width="600" height="400" style="margin: 10px;"></iframe>
-    <iframe src="plotly_cecum.html" width="600" height="400" style="margin: 10px;"></iframe>
-    <iframe src="plotly_descending.html" width="600" height="400" style="margin: 10px;"></iframe>
-    <iframe src="plotly_Rectosigmoid.html" width="600" height="400" style="margin: 10px;"></iframe>
-    <iframe src="plotly_rectum.html" width="600" height="400" style="margin: 10px;"></iframe>
-    <iframe src="plotly_sigmoid.html" width="600" height="400" style="margin: 10px;"></iframe>
-    <iframe src="plotly_transvrse.html" width="600" height="400" style="margin: 10px;"></iframe>
+        // Load CSV data into dataFrames
+        for (const fileName of fileNames) {
+            if (fileName.endsWith('.csv')) {
+                const variableName = fileName.replace('CRC_HILIC_', '').replace('_Ttest.csv', '');
+                const filePath = `${folderPath}${fileName}`;
 
-</div>
+                try {
+                    const response = await fetch(filePath);
+                    const data = await response.text();
+                    dataFrames[variableName] = await d3.csvParse(data); // Use await here
+                } catch (error) {
+                    console.error(`Error reading file '${fileName}': ${error.message}`);
+                }
+            }
+        }
+
+        // Process dataFrames and generate plots
+        processResults(dataFrames);
+    }
+
+    // Function to fetch file names from the server
+    async function fetchFileNames(folderPath) {
+        const response = await fetch(folderPath);
+        const fileNames = await response.json();
+        return fileNames;
+    }
+
+    // Function to process results and generate plots
+    function processResults(dataFrames) {
+        const selectedMzValue = 694.31494;
+
+        for (const [variableName, df] of Object.entries(dataFrames)) {
+            if (variableName.includes('output')) {
+                const selectedRowOutput = df.filter(row => row.mz == selectedMzValue);
+
+                if (selectedRowOutput.length > 0) {
+                    const rawPval = selectedRowOutput[0].raw_pval;
+                    const qFdr = selectedRowOutput[0].q_fdr;
+                    const logFcMatched = parseFloat(selectedRowOutput[0].log_fc_matched);
+
+                    let qFdrStars = '';
+                    if (qFdr < 0.05 && qFdr > 0.01) {
+                        qFdrStars = '*';
+                    } else if (qFdr < 0.01 && qFdr > 0.001) {
+                        qFdrStars = '**';
+                    } else if (qFdr < 0.001) {
+                        qFdrStars = '***';
+                    }
+
+                    // Display or use the results as needed
+                    console.log(`Results for ${variableName}:`);
+                    console.log(`Raw P-value: ${rawPval}`);
+                    console.log(`Q FDR: ${qFdr}`);
+                    console.log(`Log FC Matched: ${logFcMatched}`);
+                    console.log(`Q FDR Stars: ${qFdrStars}`);
+                } else {
+                    console.log(`No data found for the selected 'mz' value in ${variableName}.`);
+                }
+            }
+        }
+
+        // Create a dictionary to store DataFrames with variable names
+        var resultsDict = {};
+
+        // Iterate through the DataFrames
+        for (var variableName in dataFrames) {
+            // Check if the variable name contains 'output'
+            if (variableName.includes('output')) {
+                // Assuming 'mz' is a property in the DataFrame
+                var selectedRowOutput = dataFrames[variableName].find(row => row.mz === selectedMzValue);
+
+                if (selectedRowOutput) {
+                    var rawPval = selectedRowOutput.raw_pval;
+                    var qFdr = selectedRowOutput.q_fdr;
+                    var logFcMatched = parseFloat(selectedRowOutput.log_fc_matched);
+                    var qFdrStars = '';
+
+                    // Check q_fdr and assign stars accordingly
+                    if (qFdr < 0.05 && qFdr > 0.01) {
+                        qFdrStars = '*';
+                    } else if (qFdr < 0.01 && qFdr > 0.001) {
+                        qFdrStars = '**';
+                    } else if (qFdr < 0.001) {
+                        qFdrStars = '***';
+                    }
+
+                    // Save the results in the dictionary
+                    resultsDict[variableName] = {
+                        rawPval: rawPval,
+                        qFdr: qFdr,
+                        logFcMatched: logFcMatched,
+                        qFdrStars: qFdrStars
+                    };
+                } else {
+                    console.log("No data found for the selected 'mz' value in DataFrame '" + variableName + "'.");
+                }
+            }
+        }
+
+        // Iterate through the DataFrames and plot diagrams
+        for (var variableName in dataFrames) {
+            // Check if the variable name does not contain 'output'
+            if (!variableName.includes('output')) {
+                // Use the existing code to create the boxplot and swarmplot
+
+                // Assuming you have access to the DOM element where you want to place the plot
+                var plotContainer = document.getElementById('plot-container');
+
+                var desiredRowIndex = dataFrames[variableName].findIndex(row => row.mz === selectedMzValue);
+
+                if (desiredRowIndex !== -1) {
+                    var rowData = dataFrames[variableName][desiredRowIndex];
+                    var caseColumns = Object.keys(rowData).filter(key => key.includes('_Case')).map(key => rowData[key]);
+                    var controlColumns = Object.keys(rowData).filter(key => key.includes('_Control')).map(key => rowData[key]);
+
+                    var trace1 = {
+                        x: Array(caseColumns.length).fill('Tumor'),
+                        y: caseColumns,
+                        mode: 'markers',
+                        marker: {
+                            color: 'red',
+                            size: 3
+                        },
+                        type: 'scatter',
+                        name: 'Tumor'
+                    };
+
+                    var trace2 = {
+                        x: Array(controlColumns.length).fill('Normal'),
+                        y: controlColumns,
+                        mode: 'markers',
+                        marker: {
+                            color: 'green',
+                            size: 3
+                        },
+                        type: 'scatter',
+                        name: 'Normal'
+                    };
+
+                    var layout = {
+                        xaxis: {
+                            tickvals: [1, 2],
+                            ticktext: ['Tumor', 'Normal'],
+                            tickangle: 90
+                        },
+                        yaxis: {
+                            title: 'Relative Abundance'
+                        },
+                        title: {
+                            text: 'm/z=' + selectedMzValue.toFixed(4),
+                            font: {
+                                size: 12,
+                                family: 'Arial, sans-serif',
+                                color: 'black'
+                            }
+                        }
+                    };
+
+                    var data = [trace1, trace2];
+
+                    // Add q_fdr_stars and log_fc_matched information
+                    var annotations = [
+                        {
+                            x: 1.01,
+                            y: 0.94,
+                            text: 'q:' + resultsDict[variableName].qFdrStars + '\nLogFC:' + resultsDict[variableName].logFcMatched.toFixed(2),
+                            xref: 'paper',
+                            yref: 'paper',
+                            showarrow: false,
+                            font: {
+                                size: 8,
+                                color: 'black'
+                            }
+                        }
+                    ];
+
+                    layout.annotations = annotations;
+
+                    Plotly.newPlot(plotContainer, data, layout);
+                    console.log("Plot done for DataFrame '" + variableName + "'");
+                } else {
+                    console.log("No unique row found for the selected 'mz' value in DataFrame '" + variableName + "'.");
+                }
+            }
+        }
+    }
+
+    // Load and process data on page load
+    processData();
+</script>
 
 </body>
 </html>
