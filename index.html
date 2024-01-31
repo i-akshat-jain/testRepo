@@ -13,9 +13,10 @@
     <body>
         <div id="loading">Loading...</div>
         <div id="plots-container" style="display: flex; flex-direction: row; flex-wrap: wrap;">
-            <h1 id="mz-heading"></h1>
-
-        </div>
+        <label for="mz-selector">Select mz value:</label>
+        <select id="mz-selector" onchange="updatePlots()"></select>
+        <h1 id="mz-heading"></h1>
+    </div>
         <script>
             function showLoading() {
             document.getElementById('loading').style.display = 'flex';
@@ -35,7 +36,7 @@
             const response = await fetch(folderPath);
 
             if (!response.ok) {
-                console.log(response.status);
+                console.log(`error response: ${response.status}`);
                 throw new Error(`Failed to fetch. Status: ${response.status}`);
             }
 
@@ -49,7 +50,7 @@
             } catch (jsonError) {
                 // If parsing as JSON fails, assume it's HTML and extract file names differently
                 const textResponse = await response.text(); // Read the response as text
-                console.log(textResponse);
+                console.log(`error response1: ${textResponse}`);
                 // Check if the response is HTML (you can customize this check based on your server's response)
                 if (textResponse.includes('<ul>')) {
                     // Extract file names from the HTML content
@@ -61,7 +62,7 @@
                     for (fileName of fileNames) {
                     if (fileName.endsWith('.csv')) {
                         fileName = fileName.replace('CRC_HILIC_', '').replace('_Ttest.csv', '');
-                        //const filePath = `${folderPath}${fileName}`;
+                        //const filePath = ${folderPath}${fileName};
                     }}
                     console.log("File Names:", fileNames);
                 } else {
@@ -72,8 +73,8 @@
             return fileNames;
         } catch (error) {
             console.error(`Error fetching file names: ${error.message}`);
-            throw error; // Re-throw the error to propagate it
-        }finally {
+            throw error; // Re-throw the error to propagate it
+        }finally {
                 hideLoading(); // Hide loading after fetching data (whether successful or not)
             }
     }
@@ -81,7 +82,7 @@
    async function processData() {
     showLoading();
     try {
-        const folderPath = '';
+        const folderPath = 'NormalvsTumor_HILIC_ALL/';
         const fileNames = await fetchFileNames(folderPath);
         const dataFrames = {};
 
@@ -143,9 +144,9 @@ function createPlotDiv(variableName) {
                     if (qFdr < 0.05 && qFdr > 0.01) {
                         qFdrStars = '*';
                     } else if (qFdr < 0.01 && qFdr > 0.001) {
-                        qFdrStars = '**';
+                        qFdrStars = '';
                     } else if (qFdr < 0.001) {
-                        qFdrStars = '***';
+                        qFdrStars = '*';
                     }
 
                     // Display or use the results as needed
