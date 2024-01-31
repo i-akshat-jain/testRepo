@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Interactive Plots</title>
+        <!-- Include Plotly library -->
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+        <!-- Include d3 library -->
+        <script src="https://d3js.org/d3.v5.min.js"></script>
+        <link rel="stylesheet" type="text/css" href="style.css">
+    </head>
+    <body>
+        <div id="loading">Loading...</div>
+        <div id="plots-container" style="display: flex; flex-direction: row; flex-wrap: wrap;">
+            <h1 id="mz-heading"></h1>
+
+        </div>
+        <script>
+            function showLoading() {
+            document.getElementById('loading').style.display = 'flex';
+            document.getElementById('plots-container').style.display = 'none';
+        }
+
+        // Function to hide loading
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('plots-container').style.display = 'flex';
+        }
+
+    // Function to load and process CSV data
+    async function fetchFileNames(folderPath) {
+        showLoading(); 
+        try {
+            const response = await fetch(folderPath);
+
+            if (!response.ok) {
+                console.log(response.status);
+                throw new Error(`Failed to fetch. Status: ${response.status}`);
+            }
+
+            let fileNames;
+
+            try {
+                // Try to parse the response as JSON
+                const clonedResponse = response.clone(); // Clone the response object
+                fileNames = await clonedResponse.json(); // Consume the cloned response as JSON
+                console.log("File Names:", fileNames); // Print the file names
+            } catch (jsonError) {
+                // If parsing as JSON fails, assume it's HTML and extract file names differently
+                const textResponse = await response.text(); // Read the response as text
+                console.log(textResponse);
+                // Check if the response is HTML (you can customize this check based on your server's response)
+                if (textResponse.includes('<ul>')) {
+                    // Extract file names from the HTML content
+                    const parser = new DOMParser();
+                    const htmlDoc = parser.parseFromString(textResponse, 'text/html');
+                    const links = htmlDoc.querySelectorAll('a');
+
+                    fileNames = Array.from(links).map(link => link.textContent.trim());
+                    for (fileName of fileNames) {
+                    if (fileName.endsWith('.csv')) {
+                        fileName = fileName.replace('CRC_HILIC_', '').replace('_Ttest.csv', '');
+                        //const filePath = `${folderPath}${fileName}`;
+                    }}
+                    console.log("File Names:", fileNames);
+                } else {
+                    throw new Error('Unexpected response format');
+                }
+            }
+
+            return fileNames;
+        } catch (error) {
+            console.error(`Error fetching file names: ${error.message}`);
+            throw error; // Re-throw the error to propagate it
+        }finally {
+                hideLoading(); // Hide loading after fetching data (whether successful or not)
+            }
+    }
+
+   async function processData() {
+    showLoading();
+    try {
+        const folderPath = '';
+        const fileNames = await fetchFileNames(folderPath);
+        const dataFrames = {};
+
+        // Load CSV data into dataFrames
+        await Promise.all(fileNames.map(async (fileName) => {
+            if (fileName.endsWith('.csv')) {
+                const variableName = fileName.replace('CRC_HILIC_', '').replace('_Ttest.csv', '');
+                const filePath = `${folderPath}${fileName}`;
+
+                try {
+                    const response = await fetch(filePath);
+                    const data = await response.text();
+                    dataFrames[variableName] = await d3.csvParse(data); // Use await here
+                } catch (error) {
+                    console.error(`Error reading file '${fileName}': ${error.message}`);
+                }
+            }
+        }));
+
+        // Process dataFrames and generate plots
+        processResults(dataFrames);
+    } catch (error) {
+        console.error(error.message);
+    } finally {
+        hideLoading(); // Hide loading after processing data (whether successful or not)
+    }
+}
+
+
+function createPlotDiv(variableName) {
+            const plotDiv = document.createElement('div');
+            plotDiv.id = `plot-${variableName}`;
+            plotDiv.style.width = '300px'; // Adjust the width as needed
+            plotDiv.style.height = '500px'; // Adjust the height as needed
+            document.getElementById('plots-container').appendChild(plotDiv);
+            return plotDiv.id;
+        }
+    // Function to fetch file names from the server
+    
+    // Create a dictionary to store DataFrames with variable names
+    var resultsDict = {};
+
+    // Function to process results and generate plots
+   function processResults(dataFrames) {
+    const selectedMzValue = 694.31494;
+    let plotDivId; // Declare plotDivId here
+    // Inside the processResults function
+    document.getElementById('mz-heading').innerText = `m/z = ${selectedMzValue.toFixed(4)}`;
+
+    for (const [variableName, df] of Object.entries(dataFrames)) {
+        if (variableName.includes('output')) {
+            const selectedRowOutput = df.filter(row => row.mz == selectedMzValue);
+                if (selectedRowOutput.length > 0) {
+                    const rawPval = selectedRowOutput[0].raw_pval;
+                    const qFdr = selectedRowOutput[0].q_fdr;
+                    const logFcMatched = parseFloat(selectedRowOutput[0].log_fc_matched);
+
+                    let qFdrStars = '';
+                    if (qFdr < 0.05 && qFdr > 0.01) {
+                        qFdrStars = '*';
+                    } else if (qFdr < 0.01 && qFdr > 0.001) {
+                        qFdrStars = '**';
+                    } else if (qFdr < 0.001) {
+                        qFdrStars = '***';
+                    }
+
+                    // Display or use the results as needed
+                    console.log(`Results for ${variableName}:`);
+                    console.log(`Raw P-value: ${rawPval}`);
+                    console.log(`Q FDR: ${qFdr}`);
+                    console.log(`Log FC Matched: ${logFcMatched}`);
+                    console.log(`Q FDR Stars: ${qFdrStars}`);
+                    
+                    // Save the results in the dictionary
+                    resultsDict[variableName] = {
+                        "rawPval": rawPval,
+                        "qFdr": qFdr,
+                        "logFcMatched": logFcMatched,
+                        "qFdrStars": qFdrStars
+                    };
+                    console.log('ResultDict for',variableName,resultsDict);
+                } 
+                else {
+                    console.log(`No data found for the selected 'mz' value in ${variableName}.`);
+                }
+            }
+        }
+
+    
+
+        // Iterate through the DataFrames and plot diagrams
+        for (var variableName in dataFrames) {
+            // Check if the variable name does not contain 'output'
+            if (!variableName.includes('output')) {
+                console.log("DataFrames:", dataFrames);
+                plotDivId = createPlotDiv(variableName); // Assign plotDivId here
+
+                // Use the existing code to create the boxplot and swarmplot
+
+                // Assuming you have access to the DOM element where you want to place the plot
+                var plotContainer = document.getElementById(plotDivId);
+                var categories = Object.keys(dataFrames);
+
+                // Filter out categories that contain 'output'
+                var validCategories = categories.filter(category => !category.includes('output'));
+
+                var desiredRowIndex = dataFrames[variableName].findIndex(row => row.mz == selectedMzValue);
+                console.log(desiredRowIndex,"th MZ: ",dataFrames[variableName][desiredRowIndex].mz);
+                console.log(desiredRowIndex);
+
+                if (desiredRowIndex !== -1) {
+                    var rowData = dataFrames[variableName][desiredRowIndex];
+                    var caseColumns = Object.keys(rowData).filter(key => key.includes('_Case')).map(key => rowData[key]);
+                    var controlColumns = Object.keys(rowData).filter(key => key.includes('_Control')).map(key => rowData[key]);
+
+                    var trace1 = {
+                        x: Array(caseColumns.length).fill('Tumor'),
+                        y: caseColumns,
+                        mode: 'markers',
+                        marker: {
+                            color: 'red',
+                            size: 3
+                        },
+                        type: 'scatter',
+                        showlegend: false
+                    };
+
+                    var trace2 = {
+                        x: Array(controlColumns.length).fill('Normal'),
+                        y: controlColumns,
+                        mode: 'markers',
+                        marker: {
+                            color: 'green',
+                            size: 3
+                        },
+                        type: 'scatter',
+                        showlegend: false
+                        
+                    };
+
+                    var traceBox1 = {
+                                x: Array(caseColumns.length).fill('Tumor'),
+                                y: caseColumns,
+                                type: 'box',
+                                boxpoints: 'all',
+                                marker: {
+                                    color: 'red'
+                                },
+                                jitter: 0.3,
+                                pointpos: -1.8,
+                                showlegend: false,
+                                name: "Tumot"
+
+                            };
+
+                            var traceBox2 = {
+                                x: Array(controlColumns.length).fill('Normal'),
+                                y: controlColumns,
+                                type: 'box',
+                                boxpoints: 'all',
+                                marker: {
+                                    color: 'green'
+                                },
+                                jitter: 0.3,
+                                pointpos: -1.8, 
+                                showlegend: false,
+                                name: "Normal"
+                            };
+                    
+
+                    var layout = {
+                        width: 300, // Adjust the width to achieve a 3:5 ratio
+                        height: 500, // Adjust the height to achieve a 3:5 ratio
+                        xaxis: {
+                            title: {
+                            text: '<b>' + variableName + '</b>', // Use <b> HTML tag for bold
+                            font: {
+                                size: 14,
+                                family: 'Arial, sans-serif',
+                                color: 'black'
+                            }
+                        },
+                            tickangle: 90,
+                            
+                        },
+                        yaxis: {
+                            title: 'Relative Abundance'
+                        }
+                    };
+
+                    var data = [ traceBox1, traceBox2];
+                            var tempVariableName = variableName + '_Ttest_output.csv';
+                            console.log('Data:', data);
+                            console.log('Result Dict:', resultsDict);
+                            console.log('Current Variable Name:', tempVariableName);
+                            console.log('qFdrStars:', resultsDict[tempVariableName].qFdrStars);
+                            console.log('logFcMatched:', resultsDict[tempVariableName].logFcMatched.toFixed(2));
+                            console.log('q:' + resultsDict[tempVariableName].qFdrStars + '\nLogFC:' + resultsDict[tempVariableName].logFcMatched.toFixed(2));
+                            // Add q_fdr_stars and log_fc_matched information
+                    var annotations = [
+                        {
+                            x: 1.01,
+                            y: 0.94,
+                            text: 'q:' + resultsDict[tempVariableName].qFdrStars + '\n\nLogFC:' + resultsDict[tempVariableName].logFcMatched.toFixed(2),
+                            xref: 'paper',
+                            yref: 'paper',
+                            showarrow: false,
+                            font: {
+                                size: 12,
+                                color: 'black'
+                            }
+                        }
+                    ];
+
+                    layout.annotations = annotations;
+
+                    Plotly.newPlot(plotContainer, data, layout);
+                    console.log("Plot done for DataFrame '" + variableName + "'");
+                } else {
+                    console.log("No unique row found for the selected 'mz' value in DataFrame '" + variableName + "'.");
+                }
+            }
+            
+        }
+    }
+
+    // Load and process data on page load
+    processData();
+        </script>
+    </body>
+</html>
