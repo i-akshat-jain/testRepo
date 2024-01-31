@@ -48,7 +48,8 @@
                 console.log("File Names:", fileNames); // Print the file names
             } catch (jsonError) {
                 // If parsing as JSON fails, assume it's HTML and extract file names differently
-                const textResponse = await response.text(); // Read the response as text
+                const textResponse = await response.text();
+                //console.log(response.body); // Read the response as text
                 console.log(textResponse);
                 // Check if the response is HTML (you can customize this check based on your server's response)
                 if (textResponse.includes('<ul>')) {
@@ -81,7 +82,7 @@
    async function processData() {
     showLoading();
     try {
-        const folderPath = '';
+        const folderPath = 'https://github.com/i-akshat-jain/testRepo/tree/master/NormalvsTumor_HILIC_ALL/';
         const fileNames = await fetchFileNames(folderPath);
         const dataFrames = {};
 
