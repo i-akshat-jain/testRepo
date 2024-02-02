@@ -14,7 +14,7 @@
         <div id="loading">Loading...</div>
         <div id="plots-wrapper">
     <div id="plots-container" style="display: flex; flex-direction: row; flex-wrap: wrap;">
-        <label for="mz-selector">Select mz value:</label>
+        <label for="mz-selector" style="padding: 5px;">Select mz value:</label>
         <select id="mz-selector" onchange="updatePlots()"></select>
         <h1 id="mz-heading"></h1>
     </div>
@@ -64,60 +64,32 @@
         }
 
         // Function to load and process CSV data
-        async function fetchFileNames(folderPath) {
-            showLoading(); 
-            try {
-                const response = await fetch(folderPath);
+        async function fetchCsvFileNames() {
+        //showLoading();
+        const folderPath = '/normalvstumor_hilic_all/';
+        
+        let fileNames;
+        try {
+            const response = await fetch(`fetch.php?folderPath=${folderPath}`);
 
-                if (!response.ok) {
-                    console.log(`error response: ${response.status}`);
-                    throw new Error(`Failed to fetch. Status: ${response.status}`);
-                }
+            if (!response.ok) {
+                throw new Error(`Failed to fetch. Status: ${response.status}`);
+            }
 
-                let fileNames;
-
-                try {
-                    // Try to parse the response as JSON
-                    const clonedResponse = response.clone(); // Clone the response object
-                    fileNames = await clonedResponse.json(); // Consume the cloned response as JSON
-                    console.log("File Names:", fileNames); // Print the file names
-                } catch (jsonError) {
-                    // If parsing as JSON fails, assume it's HTML and extract file names differently
-                    const textResponse = await response.text(); // Read the response as text
-                    <!-- console.log(`error response1: ${textResponse}`); -->
-                    // Check if the response is HTML (you can customize this check based on your server's response)
-                    if (textResponse.includes('<ul>')) {
-                        // Extract file names from the HTML content
-                        const parser = new DOMParser();
-                        const htmlDoc = parser.parseFromString(textResponse, 'text/html');
-                        const links = htmlDoc.querySelectorAll('a');
-
-                        fileNames = Array.from(links).map(link => link.textContent.trim());
-                        for (fileName of fileNames) {
-                        if (fileName.endsWith('.csv')) {
-                            fileName = fileName.replace('crc_hilic_', '').replace('_ttest.csv', '');
-                            //const filePath = ${folderPath}${fileName};
-                        }}
-                        
-                    } else {
-                        throw new Error('Unexpected response format');
-                    }
-                }
-
-                return fileNames;
-            } catch (error) {
-                console.error(`Error fetching file names: ${error.message}`);
-                throw error; // Re-throw the error to propagate it
-            } finally {
-                    hideLoading(); // Hide loading after fetching data (whether successful or not)
-                }
+            fileNames = await response.json();
+            console.log('Fetched File Names: ',fileNames);
+        } catch (error) {
+            console.error(`Error fetching CSV file names: ${error.message}`);
         }
+        //hideLoading();
+        return fileNames;
+    }
 
         async function processData() {
         showLoading();
         try {
-            const folderPath = 'normalvstumor_hilic_all/';
-            const fileNames = await fetchFileNames(folderPath);
+            const folderPath = '/normalvstumor_hilic_all/';
+            const fileNames = await fetchCsvFileNames();
             const mzValues = await fetchMzValues();
             dataFrames = {}; // Initialize dataFrames in the global scope
             updateMzDropdown(mzValues);
@@ -142,13 +114,13 @@
         } catch (error) {
             console.error(error.message);
         } finally {
-            hideLoading(); // Hide loading after processing data (whether successful or not)
+             // Hide loading after processing data (whether successful or not)
         }
     }
 
         function updatePlots() {
     const selectedMzValue = parseFloat(document.getElementById('mz-selector').value);
-    document.getElementById('mz-heading').innerText = `m/z = ${selectedMzValue.toFixed(4)}`;
+    document.getElementById('mz-heading').innerText = `m/z = ${selectedMzValue}`;
 
     // Create a new plots-container div
     const newPlotsContainer = document.createElement('div');
@@ -206,9 +178,9 @@
                         if (qFdr < 0.05 && qFdr > 0.01) {
                             qFdrStars = '"*"';
                         } else if (qFdr < 0.01 && qFdr > 0.001) {
-                            qFdrStars = "**";
+                            qFdrStars = "";
                         } else if (qFdr < 0.001) {
-                            qFdrStars = '"***"';
+                            qFdrStars = '"*"';
                         }
 
                     // Display or use the results as needed
@@ -360,11 +332,13 @@
                     }
                     Plotly.newPlot(plotContainer, data, layout);
                     console.log("Plot done for DataFrame '" + variableName + "'");
+                    
                 } else {
                     console.log("No unique row found for the selected 'mz' value in DataFrame '" + variableName + "'.");
                 }
             }
         }
+        hideLoading();
     }
 
         // Load and process data on page load
