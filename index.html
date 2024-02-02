@@ -86,7 +86,7 @@
                     const textResponse = await response.text(); // Read the response as text
                     <!-- console.log(`error response1: ${textResponse}`); -->
                     // Check if the response is HTML (you can customize this check based on your server's response)
-                    if (textResponse.includes('<td>')) {
+                    if (textResponse.includes('<ul>')) {
                         // Extract file names from the HTML content
                         const parser = new DOMParser();
                         const htmlDoc = parser.parseFromString(textResponse, 'text/html');
